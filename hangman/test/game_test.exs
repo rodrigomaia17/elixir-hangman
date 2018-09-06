@@ -31,8 +31,41 @@ defmodule GameTest do
     { new_game, _ } = Game.make_move(game, "x")
     assert new_game.game_state != :already_used
     assert MapSet.member?(new_game.used, "x")
-    { new_game, _ } = Game.make_move(game, "x")
-    assert new_game.game_state == :guess_accepted
+    { new_game, _ } = Game.make_move(new_game, "x")
+    assert new_game.game_state == :already_used
+  end
+  
+  test "test good guess and you won" do
+    {new_game, _} = %{Game.new_game | letters: ["o","i"], used: MapSet.new(["a","i"])}
+               |> Game.make_move("o")
+
+    assert new_game.game_state == :won
+    assert MapSet.member?(new_game.used, "o")
+  end
+
+  test "test good guess and you not won" do
+    {new_game , _ } = %{Game.new_game | letters: ["o","i"], used: MapSet.new(["a"])}
+    |> Game.make_move("i")
+
+    assert new_game.game_state == :good_guess
+    assert MapSet.member?(new_game.used, "i")
+  end
+
+  test "test bad guess and you lose" do
+    {new_game , _ } = %{Game.new_game | letters: ["o","i"], used: MapSet.new(["a"]), turns_left: 1}
+    |> Game.make_move("z")
+
+    assert new_game.game_state == :lost
+    assert MapSet.member?(new_game.used, "z")
+  end
+
+  test "test bad guess and you not lose" do
+    {new_game, _ } = %{Game.new_game | letters: ["o","i"], used: MapSet.new(["a"]), turns_left: 2}
+    |> Game.make_move("z")
+
+    assert new_game.game_state == :bad_guess
+    assert new_game.turns_left == 1
+    assert MapSet.member?(new_game.used, "z")
   end
 
 end

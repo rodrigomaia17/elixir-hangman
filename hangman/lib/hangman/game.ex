@@ -19,19 +19,38 @@ defmodule Hangman.Game do
   end
 
   def make_move(game, guess) do
-    game = accept_move(game, guess, MapSet.member?(game.used, guess))
+    already_guessed_key = MapSet.member?(game.used, guess)
+    game = accept_move(game, guess, already_guessed_key )
     { game, tally(game)}
   end
 
   def accept_move(game, _guess, true) do
-    Map.put(game, :game_state, :already_used)
+    %{game | game_state: :already_used}
   end
 
   def accept_move(game, guess, _ ) do
     game
     |> Map.put(:used, MapSet.put(game.used, guess))
-    |> Map.put(:game_state, :guess_accepted )
+    |> checkScore(guess in game.letters)
   end
+
+  def checkScore(game, _good_guess = true) do
+    letters_set = MapSet.new(game.letters)
+    new_state = MapSet.subset?(letters_set, game.used)
+                 |> check_win
+    %{game | game_state: new_state}
+  end
+  def checkScore(game, _bad_guess) do
+    turns = game.turns_left - 1
+    game
+    |> Map.put(:turns_left, turns)
+    |> Map.put(:game_state, check_loss(turns))
+  end
+
+  def check_win(true), do: :won
+  def check_win(_), do: :good_guess
+  def check_loss(0), do: :lost
+  def check_loss(_), do: :bad_guess
 
   def tally(_game) do
   end
